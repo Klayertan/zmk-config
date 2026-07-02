@@ -1,0 +1,4 @@
+config CUSTOM_ANIME_DISPLAY
+    bool "Custom anime OLED status screen"
+    default y if ZMK_DISPLAY
+    select LV_USE_IMG
