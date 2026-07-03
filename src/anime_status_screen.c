@@ -19,7 +19,7 @@
 /*
  * Dancing Girl Sprites by Ansimuz, CC0.
  * Source: https://opengameart.org/content/dancing-girl-sprites
- * Frames converted to 32x32 1-bit images for SSD1306 OLEDs.
+ * Snap animation converted to upright 32x32 1-bit frames for SSD1306 OLEDs.
  */
 
 static void set_dance_frame(void *obj, int32_t value) {
@@ -34,7 +34,7 @@ static void start_dance(lv_obj_t *img) {
     lv_anim_set_exec_cb(&dance, set_dance_frame);
     lv_anim_set_values(&dance, 0, ANIME_FRAME_COUNT - 1);
     lv_anim_set_path_cb(&dance, lv_anim_path_step);
-    lv_anim_set_time(&dance, 800);
+    lv_anim_set_time(&dance, 560);
     lv_anim_set_repeat_count(&dance, LV_ANIM_REPEAT_INFINITE);
     lv_anim_start(&dance);
 }
