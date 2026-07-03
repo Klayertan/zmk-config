@@ -25,6 +25,8 @@
 #define IMAGE_PALETTE_BYTES 8
 #define IMAGE_DATA_BYTES (LOGICAL_W * LOGICAL_H / 8)
 #define WORD_MAX_CHARS 8
+#define TYPED_TEXT_HAS_KEY_EVENTS                                                                 \
+    (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
 
 struct typed_text_state {
     char text[WORD_MAX_CHARS + 1];
@@ -280,6 +282,7 @@ static void backspace_char(void) {
 }
 
 static struct typed_text_state typed_text_get_state(const zmk_event_t *eh) {
+#if TYPED_TEXT_HAS_KEY_EVENTS
     const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
 
     if (ev != NULL && ev->usage_page == HID_USAGE_KEY) {
@@ -310,6 +313,9 @@ static struct typed_text_state typed_text_get_state(const zmk_event_t *eh) {
             }
         }
     }
+#else
+    ARG_UNUSED(eh);
+#endif
 
     struct typed_text_state state = {};
     strncpy(state.text, display_text(), sizeof(state.text) - 1);
@@ -328,7 +334,9 @@ static void typed_text_update_cb(struct typed_text_state state) {
 
 ZMK_DISPLAY_WIDGET_LISTENER(typed_text_status, struct typed_text_state, typed_text_update_cb,
                             typed_text_get_state)
+#if TYPED_TEXT_HAS_KEY_EVENTS
 ZMK_SUBSCRIPTION(typed_text_status, zmk_keycode_state_changed);
+#endif
 
 lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_t *screen = lv_obj_create(NULL);
@@ -340,7 +348,12 @@ lv_obj_t *zmk_display_status_screen(void) {
     typed_img = lv_img_create(screen);
     lv_obj_align(typed_img, LV_ALIGN_CENTER, 0, 0);
 
+#if TYPED_TEXT_HAS_KEY_EVENTS
     typed_text_status_init();
+#else
+    render_text_image(display_text());
+    lv_img_set_src(typed_img, &typed_image);
+#endif
 
     return screen;
 }
