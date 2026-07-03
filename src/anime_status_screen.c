@@ -1,5 +1,7 @@
 #include <lvgl.h>
 
+#include <zephyr/sys/util.h>
+
 #include <zmk/display/status_screen.h>
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
@@ -19,24 +21,17 @@
 /*
  * Dancing Girl Sprites by Ansimuz, CC0.
  * Source: https://opengameart.org/content/dancing-girl-sprites
- * Snap animation converted to upright 32x32 1-bit frames for SSD1306 OLEDs.
+ * Skip animation converted to 96x32 1-bit frames for vertically mounted SSD1306 OLEDs.
  */
 
-static void set_dance_frame(void *obj, int32_t value) {
-    lv_img_set_src((lv_obj_t *)obj, &anime_dance_frames[value % ANIME_FRAME_COUNT]);
-}
+static lv_obj_t *dance_img;
+static lv_timer_t *dance_timer;
+static uint8_t dance_frame;
 
-static void start_dance(lv_obj_t *img) {
-    lv_anim_t dance;
-
-    lv_anim_init(&dance);
-    lv_anim_set_var(&dance, img);
-    lv_anim_set_exec_cb(&dance, set_dance_frame);
-    lv_anim_set_values(&dance, 0, ANIME_FRAME_COUNT - 1);
-    lv_anim_set_path_cb(&dance, lv_anim_path_step);
-    lv_anim_set_time(&dance, 560);
-    lv_anim_set_repeat_count(&dance, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_start(&dance);
+static void advance_dance(lv_timer_t *timer) {
+    ARG_UNUSED(timer);
+    dance_frame = (dance_frame + 1) % ANIME_FRAME_COUNT;
+    lv_img_set_src(dance_img, &anime_dance_frames[dance_frame]);
 }
 
 lv_obj_t *zmk_display_status_screen(void) {
@@ -49,7 +44,14 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_t *img = lv_img_create(screen);
     lv_img_set_src(img, &anime_dance_frames[0]);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
-    start_dance(img);
+
+    dance_img = img;
+    dance_frame = 0;
+    if (dance_timer == NULL) {
+        dance_timer = lv_timer_create(advance_dance, 120, NULL);
+    } else {
+        lv_timer_reset(dance_timer);
+    }
 
     return screen;
 }
