@@ -1,3 +1,3 @@
-if(CONFIG_CUSTOM_ANIME_DISPLAY)
-  target_sources(app PRIVATE src/anime_status_screen.c)
+if(CONFIG_CUSTOM_TYPED_DISPLAY)
+  target_sources(app PRIVATE src/typed_status_screen.c)
 endif()
