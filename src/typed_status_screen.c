@@ -24,7 +24,7 @@
 #define LOGICAL_H 32
 #define IMAGE_PALETTE_BYTES 8
 #define IMAGE_DATA_BYTES (LOGICAL_W * LOGICAL_H / 8)
-#define WORD_MAX_CHARS 8
+#define WORD_MAX_CHARS 10
 #define TYPED_TEXT_HAS_KEY_EVENTS                                                                 \
     (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
 
@@ -35,7 +35,6 @@ struct typed_text_state {
 static lv_obj_t *typed_img;
 static char current_word[WORD_MAX_CHARS + 1] = "";
 static uint8_t current_len;
-static bool word_finished;
 static uint8_t active_mods;
 
 static uint8_t typed_image_map[IMAGE_PALETTE_BYTES + IMAGE_DATA_BYTES] = {
@@ -142,7 +141,7 @@ static void set_physical_pixel(uint8_t x, uint8_t y) {
     set_logical_pixel(LOGICAL_W - 1 - y, x);
 }
 
-static void draw_glyph(char c, uint8_t x, uint8_t y, uint8_t scale) {
+static void draw_glyph_rotated(char c, uint8_t x, uint8_t y, uint8_t scale) {
     const uint8_t *glyph = glyph_for_char(c);
 
     for (uint8_t row = 0; row < 7; row++) {
@@ -153,7 +152,7 @@ static void draw_glyph(char c, uint8_t x, uint8_t y, uint8_t scale) {
 
             for (uint8_t dy = 0; dy < scale; dy++) {
                 for (uint8_t dx = 0; dx < scale; dx++) {
-                    set_physical_pixel(x + col * scale + dx, y + row * scale + dy);
+                    set_physical_pixel(x + row * scale + dy, y + col * scale + dx);
                 }
             }
         }
@@ -167,15 +166,16 @@ static void render_text_image(const char *text) {
 
     uint8_t len = MIN(strlen(text), WORD_MAX_CHARS);
     uint8_t scale = 2;
+    uint8_t char_w = 5 * scale;
     uint8_t char_h = 7 * scale;
-    uint8_t gap = 2;
-    uint8_t line_h = char_h + gap;
-    uint8_t block_h = len * line_h - gap;
-    uint8_t y = block_h < PHYS_H ? (PHYS_H - block_h) / 2 : 0;
-    uint8_t x = (PHYS_W - (5 * scale)) / 2;
+    uint8_t gap = 1;
+    uint8_t advance = char_w + gap;
+    uint8_t block_w = len * advance - gap;
+    uint8_t x = (PHYS_W - char_h) / 2;
+    uint8_t y = block_w < PHYS_H ? (PHYS_H - block_w) / 2 : 0;
 
     for (uint8_t i = 0; i < len; i++) {
-        draw_glyph(text[i], x, y + i * line_h, scale);
+        draw_glyph_rotated(text[i], x, y + i * advance, scale);
     }
 }
 
@@ -257,12 +257,6 @@ static char char_from_keycode(uint32_t keycode, bool shifted) {
 }
 
 static void append_char(char c) {
-    if (word_finished) {
-        current_len = 0;
-        current_word[0] = '\0';
-        word_finished = false;
-    }
-
     if (current_len == WORD_MAX_CHARS) {
         memmove(current_word, current_word + 1, WORD_MAX_CHARS - 1);
         current_len--;
@@ -273,7 +267,6 @@ static void append_char(char c) {
 }
 
 static void backspace_char(void) {
-    word_finished = false;
     if (current_len == 0) {
         return;
     }
@@ -299,8 +292,11 @@ static struct typed_text_state typed_text_get_state(const zmk_event_t *eh) {
                     backspace_char();
                     break;
                 case HID_USAGE_KEY_KEYBOARD_SPACEBAR:
+                    append_char(' ');
+                    break;
                 case HID_USAGE_KEY_KEYBOARD_RETURN_ENTER:
-                    word_finished = true;
+                    current_len = 0;
+                    current_word[0] = '\0';
                     break;
                 default: {
                     char c = char_from_keycode(ev->keycode, shifted);
