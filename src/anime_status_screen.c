@@ -6,12 +6,15 @@
 #include <zmk/display.h>
 #include <zmk/display/status_screen.h>
 #include <zmk/event_manager.h>
-#include <zmk/events/keycode_state_changed.h>
 #include <zmk/events/position_state_changed.h>
 
+#include <zmk/display/widgets/peripheral_status.h>
+
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 #include <zmk/display/widgets/layer_status.h>
 #include <zmk/display/widgets/output_status.h>
-#include <zmk/display/widgets/peripheral_status.h>
+#include <zmk/events/keycode_state_changed.h>
+#endif
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #define LV_ATTRIBUTE_MEM_ALIGN
@@ -39,7 +42,8 @@ static struct zmk_widget_output_status output_status_widget;
 static struct zmk_widget_peripheral_status peripheral_status_widget;
 #endif
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_LAYER_STATUS)
+#if IS_ENABLED(CONFIG_ZMK_WIDGET_LAYER_STATUS) &&                                                   \
+    (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
 static struct zmk_widget_layer_status layer_status_widget;
 #endif
 
@@ -54,11 +58,13 @@ struct keypress_status_state {
     bool pressed;
 };
 
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 struct keycode_status_state {
     uint16_t usage_page;
     uint32_t keycode;
     bool pressed;
 };
+#endif
 
 static struct keypress_status_state keypress_status_get_state(const zmk_event_t *eh) {
     const struct zmk_position_state_changed *ev;
@@ -112,9 +118,11 @@ static void keypress_status_update_cb(struct keypress_status_state state) {
     lv_label_set_text(position_label, text);
 }
 
-ZMK_DISPLAY_WIDGET_LISTENER(keypress_status, struct keypress_status_state,
-                            keypress_status_update_cb, keypress_status_get_state)
+ZMK_DISPLAY_WIDGET_LISTENER(keypress_status, struct keypress_status_state, keypress_status_update_cb,
+                            keypress_status_get_state)
 ZMK_SUBSCRIPTION(keypress_status, zmk_position_state_changed);
+
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 
 static struct keycode_status_state keycode_status_get_state(const zmk_event_t *eh) {
     const struct zmk_keycode_state_changed *ev;
@@ -213,6 +221,8 @@ static void keycode_status_update_cb(struct keycode_status_state state) {
 ZMK_DISPLAY_WIDGET_LISTENER(keycode_status, struct keycode_status_state, keycode_status_update_cb,
                             keycode_status_get_state)
 ZMK_SUBSCRIPTION(keycode_status, zmk_keycode_state_changed);
+
+#endif
 
 #endif
 
@@ -331,7 +341,8 @@ static lv_obj_t *create_right_status_screen(void) {
     style_status_widget(peripheral_status);
 #endif
 
-#if IS_ENABLED(CONFIG_ZMK_WIDGET_LAYER_STATUS)
+#if IS_ENABLED(CONFIG_ZMK_WIDGET_LAYER_STATUS) &&                                                   \
+    (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
     zmk_widget_layer_status_init(&layer_status_widget, screen);
     lv_obj_t *layer_status = zmk_widget_layer_status_obj(&layer_status_widget);
     lv_obj_align(layer_status, LV_ALIGN_TOP_LEFT, 40, 0);
@@ -339,11 +350,17 @@ static lv_obj_t *create_right_status_screen(void) {
 #endif
 
     position_label = create_label(screen, "POS --", 0, 12);
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     keycode_label = create_label(screen, "KEY --", 0, 22);
+#else
+    keycode_label = create_label(screen, "PERIPH", 0, 22);
+#endif
     create_key_grid(screen);
 
     keypress_status_init();
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     keycode_status_init();
+#endif
 
     return screen;
 }
