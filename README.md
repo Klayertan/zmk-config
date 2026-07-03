@@ -17,6 +17,8 @@ The OLED firmware is side-specific:
 | Left | Dancing monochrome anime girl pixel art |
 | Right | Connection status, active layer, last key label, and a tiny key-position grid |
 
+The left OLED animation is converted from [Dancing Girl Sprites](https://opengameart.org/content/dancing-girl-sprites) by Luis Zuno / Ansimuz, released as CC0/public domain. The firmware uses the `slide` dance converted to 1-bit 64x32 frames for the OLED.
+
 For the setup where the right half is your main/USB side, flash:
 
 - left keyboard: `corne_left.uf2`
