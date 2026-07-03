@@ -2,10 +2,32 @@
 
 Custom ZMK firmware for a Corne build with:
 
-- animated anime OLED status art
+- animated anime OLED status art on the left half
+- connection/layer/key-press status on the right half
 - RGB underglow enabled at startup
 - an `ADJUST` lighting layer when `LOWER` and `RAISE` are held together
 - Japanese input keys on the lower layer
+
+## OLED Screens
+
+The OLED firmware is side-specific:
+
+| Half | Display |
+| --- | --- |
+| Left | Dancing monochrome anime girl pixel art |
+| Right | Connection status, active layer, last key label, and a tiny key-position grid |
+
+For the setup where the right half is your main/USB side, flash:
+
+- left keyboard: `corne_left.uf2`
+- right keyboard: `corne_right_central.uf2`
+
+For a normal left-central setup, flash:
+
+- left keyboard: `corne_left.uf2`
+- right keyboard: `corne_right.uf2`
+
+OLEDs are 128x32 monochrome, so the anime art is pixel art rather than a full-color image.
 
 ## RGB Shortcuts
 
