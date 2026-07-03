@@ -53,6 +53,37 @@ const lv_img_dsc_t anime_girl = {
     .data = anime_girl_map,
 };
 
+static void anime_set_translate_x(void *obj, int32_t value) {
+    lv_obj_set_style_translate_x((lv_obj_t *)obj, value, LV_PART_MAIN);
+}
+
+static void anime_set_translate_y(void *obj, int32_t value) {
+    lv_obj_set_style_translate_y((lv_obj_t *)obj, value, LV_PART_MAIN);
+}
+
+static void anime_start_dance(lv_obj_t *img) {
+    lv_anim_t sway;
+    lv_anim_init(&sway);
+    lv_anim_set_var(&sway, img);
+    lv_anim_set_exec_cb(&sway, anime_set_translate_x);
+    lv_anim_set_values(&sway, -2, 2);
+    lv_anim_set_time(&sway, 420);
+    lv_anim_set_playback_time(&sway, 420);
+    lv_anim_set_repeat_count(&sway, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&sway);
+
+    lv_anim_t bounce;
+    lv_anim_init(&bounce);
+    lv_anim_set_var(&bounce, img);
+    lv_anim_set_exec_cb(&bounce, anime_set_translate_y);
+    lv_anim_set_values(&bounce, -1, 1);
+    lv_anim_set_time(&bounce, 220);
+    lv_anim_set_playback_time(&bounce, 220);
+    lv_anim_set_repeat_count(&bounce, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_set_delay(&bounce, 80);
+    lv_anim_start(&bounce);
+}
+
 lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_t *screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(screen, lv_color_black(), LV_PART_MAIN);
@@ -60,6 +91,7 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_obj_t *img = lv_img_create(screen);
     lv_img_set_src(img, &anime_girl);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
+    anime_start_dance(img);
 
     return screen;
 }
